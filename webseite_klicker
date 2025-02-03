@@ -1,0 +1,17 @@
+#!/bin/bash
+
+URL="https://example.com"  # Ersetze mit deiner gewünschten URL
+CLICK_X=500  # X-Koordinate des Klicks
+CLICK_Y=300  # Y-Koordinate des Klicks
+DELAY=5      # Wartezeit vor dem Klick (Sekunden)
+
+# Öffne die Webseite im Standardbrowser
+xdg-open "$URL"
+
+# Warte, bis die Seite geladen ist
+sleep $DELAY
+
+# Führe einen Mausklick an der angegebenen Position aus
+xdotool mousemove $CLICK_X $CLICK_Y click 1
+
+echo "Klick auf $URL an Position ($CLICK_X, $CLICK_Y) ausgeführt."
