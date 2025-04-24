@@ -1,0 +1,65 @@
+const https = require('https');
+const http = require('http');
+const url = require('url');
+const axios = require('axios');
+
+// Deine Websites
+const websites = [
+  'https://example.com',
+  'https://google.com',
+];
+
+// Telegram-Konfiguration
+const TELEGRAM_TOKEN = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'; // DEIN BOT TOKEN
+const TELEGRAM_CHAT_ID = '123456789'; // DEINE CHAT-ID
+
+async function sendTelegramMessage(message) {
+  const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  try {
+    await axios.post(telegramUrl, {
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+    });
+  } catch (err) {
+    console.error('Fehler beim Senden an Telegram:', err.message);
+  }
+}
+
+function checkWebsite(site) {
+  const parsedUrl = url.parse(site);
+  const protocol = parsedUrl.protocol === 'https:' ? https : http;
+
+  const start = Date.now();
+  const req = protocol.get(site, (res) => {
+    const duration = Date.now() - start;
+    const status = res.statusCode;
+    const msg = `[${site}] Antwort: ${status} in ${duration}ms`;
+
+    console.log(msg);
+
+    if (status >= 400) {
+      sendTelegramMessage(`⚠️ Fehler bei ${site}: Status ${status}`);
+    }
+  });
+
+  req.on('error', (err) => {
+    const errorMsg = `❌ ${site} nicht erreichbar: ${err.message}`;
+    console.log(errorMsg);
+    sendTelegramMessage(errorMsg);
+  });
+
+  req.setTimeout(5000, () => {
+    req.abort();
+    const timeoutMsg = `⏱️ ${site} hat nicht geantwortet (Timeout)`;
+    console.log(timeoutMsg);
+    sendTelegramMessage(timeoutMsg);
+  });
+}
+
+function runChecks() {
+  websites.forEach((site) => checkWebsite(site));
+}
+
+// Sofort starten und dann alle 60 Sekunden
+runChecks();
+setInterval(runChecks, 60 * 1000);
