@@ -1,0 +1,37 @@
+const https = require('https');
+const http = require('http');
+const url = require('url');
+
+const websites = [
+  'https://example.com',
+  'https://google.com',
+  'http://your-local-ip:3000',
+];
+
+function checkWebsite(site) {
+  const parsedUrl = url.parse(site);
+  const protocol = parsedUrl.protocol === 'https:' ? https : http;
+
+  const start = Date.now();
+  const req = protocol.get(site, (res) => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${site} - Status: ${res.statusCode} - Time: ${duration}ms`);
+  });
+
+  req.on('error', (err) => {
+    console.log(`[${new Date().toISOString()}] ${site} - ERROR: ${err.message}`);
+  });
+
+  req.setTimeout(5000, () => {
+    console.log(`[${new Date().toISOString()}] ${site} - TIMEOUT`);
+    req.abort();
+  });
+}
+
+function runChecks() {
+  websites.forEach((site) => checkWebsite(site));
+}
+
+// Check every 60 seconds
+runChecks();
+setInterval(runChecks, 60 * 1000);
